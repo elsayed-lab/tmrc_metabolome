@@ -110,11 +110,12 @@ contrasts performed in the data:
 I therefore copied the DE table data structures to the rda/ directory
 and will do some simple tests on it.
 
-```{r collecting_data}
+### Collecting monocytes
+
+```{r collecting_data_monocytes}
 monocyte <- new.env()
 load(file = "rda/visit_monocyte_gluc_table-v202011.rda", envir = monocyte)
 monocyte <- monocyte[["visit_monocyte_gluc_table"]]
-load("rda/visit_biopsy_gluc_table-v202011.rda")
 
 monocyte_topn <- extract_significant_genes(monocyte, n = 100, according_to = "deseq")
 monocyte_v2v1_up <- monocyte_topn[["deseq"]][["ups"]][["v2v1"]]
@@ -123,7 +124,28 @@ monocyte_v3v1_up <- monocyte_topn[["deseq"]][["ups"]][["v3v1"]]
 monocyte_v3v1_down <- monocyte_topn[["deseq"]][["downs"]][["v3v1"]]
 ```
 
+### Collecting data biopsies
+
+```{r collecting_data_biopsies}
+biopsy <- new.env()
+load(file = "rda/visit_biopsy_gluc_table-v202011.rda", envir = biopsy)
+biopsy <- biopsy[["visit_biopsy_gluc_table"]]
+
+biopsy_topn <- extract_significant_genes(biopsy, according_to = "deseq")
+biopsy_v2v1_up <- biopsy_topn[["deseq"]][["ups"]][["v2v1"]]
+dim(biopsy_v2v1_up)
+biopsy_v2v1_down <- biopsy_topn[["deseq"]][["downs"]][["v2v1"]]
+dim(biopsy_v2v1_down)
+
+biopsy_v3v1_up <- biopsy_topn[["deseq"]][["ups"]][["v3v1"]]
+dim(biopsy_v3v1_up)
+biopsy_v3v1_down <- biopsy_topn[["deseq"]][["downs"]][["v3v1"]]
+dim(biopsy_v3v1_down)
+```
+
 ## GSEA of visits
+
+### Monocytes
 
 ```{r monocyte_visit_gsea}
 monocyte_v2v1_gpup <- simple_gprofiler(monocyte_v2v1_up)
@@ -147,6 +169,50 @@ monocyte_v3v1_gpdown[["pvalue_plots"]][["bpp_plot_over"]]
 monocyte_v3v1_gpdown[["pvalue_plots"]][["mfp_plot_over"]]
 monocyte_v3v1_gpdown[["pvalue_plots"]][["kegg_plot_over"]]
 ```
+
+
+### Biopsys
+
+```{r biopsy_visit_gsea}
+biopsy_v2v1_gpup <- simple_gprofiler(biopsy_v2v1_up)
+biopsy_v2v1_gpup[["pvalue_plots"]][["bpp_plot_over"]]
+biopsy_v2v1_gpup[["pvalue_plots"]][["mfp_plot_over"]]
+biopsy_v2v1_gpup[["pvalue_plots"]][["kegg_plot_over"]]
+
+biopsy_v2v1_gpdown <- simple_gprofiler(biopsy_v2v1_down)
+biopsy_v2v1_gpdown[["pvalue_plots"]][["bpp_plot_over"]]
+biopsy_v2v1_gpdown[["pvalue_plots"]][["mfp_plot_over"]]
+biopsy_v2v1_gpdown[["pvalue_plots"]][["kegg_plot_over"]]
+
+
+biopsy_v3v1_gpup <- simple_gprofiler(
+    biopsy_v3v1_up,
+    excel = glue::glue("excel/v3v1_up_gprofiler-v{ver}.xlsx"))
+biopsy_v3v1_gpup[["pvalue_plots"]][["bpp_plot_over"]]
+biopsy_v3v1_gpup[["pvalue_plots"]][["mfp_plot_over"]]
+biopsy_v3v1_gpup[["pvalue_plots"]][["kegg_plot_over"]]
+biopsy_v3v1_gpup[["pvalue_plots"]][["reactome_plot_over"]]
+
+biopsy_v3v1_gpdown <- simple_gprofiler(
+    biopsy_v3v1_down,
+    excel = glue::glue("excel/v3v1_down_gprofiler-v{ver}.xlsx"))
+biopsy_v3v1_gpdown[["pvalue_plots"]][["bpp_plot_over"]]
+biopsy_v3v1_gpdown[["pvalue_plots"]][["mfp_plot_over"]]
+biopsy_v3v1_gpdown[["pvalue_plots"]][["kegg_plot_over"]]
+```
+
+# GSVA of the upstream data sets
+
+## Monocytes
+
+## Biopsies
+
+# KEGG Mapping and Cross Referencing
+
+In order to color the various KEGG path diagrams, we will need to make
+some bridges across the various databases, though I think the bridges
+will need to be less interesting than they were when we thought it was
+L. panamensis.
 
 
 

@@ -29,3 +29,12 @@ do the following:
 3.  Perform a set of GSEA on these results.
 4.  Potentially perform a set of GSVA on their source datasets.
 5.  Compare these results to the results from MetaboAnalyst.
+6.  Create pathway diagrams of the genes and metabolites, on the same image.
+  a.  Perform this for a specific set of pathways.
+
+# Shift of focus
+
+It appears we will also try to compare the KEGG results from the two
+separate directions: from the metabolites and from the genes.  To that
+end, we will attempt to color KEGG pathway diagrams with the human
+genes and metabolites simultaneously.
