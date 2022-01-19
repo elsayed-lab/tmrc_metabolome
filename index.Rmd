@@ -214,7 +214,85 @@ some bridges across the various databases, though I think the bridges
 will need to be less interesting than they were when we thought it was
 L. panamensis.
 
+The things we will need (I think):
 
+1.  Mapping from the Ensembl IDs to NCBI IDs (load_biomart), and the KEGG
+IDs to NCBI (load_kegg).
+2.  Table of kegg and gene IDs.
+3.  Set of pathways of interest.
+
+## Starter set
+
+Lets make it easy on ourselves and just color some KEGG pictures with
+the observed genes from the biopsy up/down.
+
+```{r kegg_testing}
+updown_genes <- rbind(biopsy_v3v1_up, biopsy_v3v1_down)
+
+wanted_columns <- c("ensembl_gene_id", "ensembl_gene_id_version",
+                    "entrez_trans_name", "entrezgene_description",
+                    "entrezgene_accession", "entrezgene_id")
+hs_annot <- load_biomart_annotations(archive = FALSE, gene_requests = wanted_columns,
+                                     include_lengths = FALSE, overwrite = TRUE)[["annotation"]]
+kegg_annot <- load_kegg_annotations(abbreviation = "hsa")
+
+## hs_annot says that hsa:7105 is tetraspannin.6, how about kegg?
+test_id <- "7105"
+test_hsa_idx <- hs_annot[["entrezgene_id"]] == test_id
+head(hs_annot[test_hsa_idx, ], n = 1)
+
+test_kegg_idx <- kegg_annot[["kegg_geneid"]] == paste0("hsa:", test_id)
+kegg_annot[test_kegg_idx, ]
+
+
+interesting_stuff <- merge(updown_genes, hs_annot,
+                           by.x = "ensemblgeneid", by.y = "ensembl_gene_id", all.x = TRUE)
+dim(updown_genes)
+dim(interesting_stuff)
+## So, there appear to be a few duplicates, that should be ok.
+interesting_stuff[["kegg_prefix_id"]] <- paste0("hsa:", interesting_stuff[["entrezgene_id"]])
+## interesting_stuff <- merge(interesting_stuff, kegg_annot, by.x = "temp_id", by.y = "kegg_geneid")
+## Hey doofus, kegg uses 'hsa:', followed by the NCBI entrez gene ID,
+## I don't need to cross reference the darn kegg IDs at all.
+## well, ok, lets see if we get any fun colored paths...
+
+pathview_input <- interesting_stuff
+testing <- simple_pathview(gene_input = pathview_input, species = "hsa",
+                           fc_column = "deseq_logfc",
+                           id_column = "entrezgene_id")
+                           ## id_column = "kegg_prefix_id")
+```
+
+# Add compounds and genes
+
+We have a csv/tsv file of pathways and compounds.  It is in a peculiar
+format and does not have any information about the range of
+increase/decrease.  As a result, I do not think we can meaningfully
+scale the data; but we can extract all the compound IDs and set their color.
+
+```{r get_compounds}
+compound_start <- readr::read_csv("downloaded_data/joint_metaboanalyst.csv")
+pile_of_compounds_and_junk <- compound_start[[2]]
+split_stuff <- strsplit(x = pile_of_compounds_and_junk, split = "; ")
+compounds <- c()
+for (i in 1:length(split_stuff)) {
+  internal <- split_stuff[[i]]
+  cpd_idx <- grep("^cpd", internal)
+  internal <- internal[cpd_idx]
+  internal_ids <- stringi::stri_replace_all_fixed(internal, ";", "")
+  internal_ids <- gsub(pattern = "^cpd:", replacement = "", x = internal_ids)
+  compounds <- c(internal_ids, compounds)
+}
+compounds <- unique(compounds)
+compound_input <- rep(10, length(compounds))
+names(compound_input) <- compounds
+
+
+testing <- simple_pathview(gene_input = pathview_input, compound_input = compound_input,
+                           species = "hsa",
+                           fc_column = "deseq_logfc",
+                           id_column = "entrezgene_id")
+```
 
 
 ```{r saveme, eval=FALSE}
